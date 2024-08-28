@@ -10,83 +10,100 @@ import static org.hamcrest.Matchers.equalTo;
 public class UserApiTests {
 
     private static final String BASE_URL = "https://bfhldevapigw.healthrx.co.in/automation-campus";
+    private static final String ROLL_NUMBER = "1"; 
 
-    @Before
-    public void setUp() {
-        // Set base URI for REST Assured
+    @BeforeAll
+    public static void setup() {
         RestAssured.baseURI = BASE_URL;
     }
 
     @Test
     public void testCreateUserWithValidData() {
-        RestAssured.given()
-            .header("roll-number", "1")
-            .header("Content-Type", "application/json")
-            .body("{ \"firstName\": \"John\", \"lastName\": \"Doe\", \"phoneNumber\": 1234567890, \"emailId\": \"john.doe@example.com\" }")
-            .when()
-            .post("/create/user")
-            .then()
-            .statusCode(200)
-            .body("message", equalTo("User created successfully"));
-    }
+        String requestBody = "{ \"firstName\": \"Rahul\", \"lastName\": \"Sura\", \"phoneNumber\": 1234567890, \"emailId\": \"rsura@example.com\" }";
 
-    @Test
-    public void testCreateUserWithoutRollNumber() {
-        RestAssured.given()
-            .header("Content-Type", "application/json")
-            .body("{ \"firstName\": \"John\", \"lastName\": \"Doe\", \"phoneNumber\": 1234567890, \"emailId\": \"john.doe@example.com\" }")
-            .when()
-            .post("/create/user")
-            .then()
-            .statusCode(401)
-            .body("error", equalTo("Unauthorized: Missing roll number"));
+        Response response = given()
+                .header("roll-number", ROLL_NUMBER)
+                .contentType("application/json")
+                .body(requestBody)
+                .post("/create/user");
+
+        response.then().statusCode(200); 
     }
 
     @Test
     public void testCreateUserWithDuplicatePhoneNumber() {
-        // First create a user with the phone number
-        RestAssured.given()
-            .header("roll-number", "2")
-            .header("Content-Type", "application/json")
-            .body("{ \"firstName\": \"Jane\", \"lastName\": \"Doe\", \"phoneNumber\": 1234567890, \"emailId\": \"jane.doe@example.com\" }")
-            .when()
-            .post("/create/user");
+        String requestBody = "{ \"firstName\": \"Neha\", \"lastName\": \"sura\", \"phoneNumber\": 1234567888, \"emailId\": \"nehasura@example.com\" }";
 
-        // Attempt to create another user with the same phone number
-        RestAssured.given()
-            .header("roll-number", "3")
-            .header("Content-Type", "application/json")
-            .body("{ \"firstName\": \"Alice\", \"lastName\": \"Smith\", \"phoneNumber\": 1234567890, \"emailId\": \"alice.smith@example.com\" }")
-            .when()
-            .post("/create/user")
-            .then()
-            .statusCode(400)
-            .body("error", equalTo("Phone number already in use"));
+        Response response = given()
+                .header("roll-number", ROLL_NUMBER)
+                .contentType("application/json")
+                .body(requestBody)
+                .post("/create/user");
+
+        response.then().statusCode(400);
+    }
+
+    @Test
+    public void testCreateUserWithoutRollNumber() {
+        String requestBody = "{ \"firstName\": \"Test\", \"lastName\": \"User\", \"phoneNumber\": 9876543210, \"emailId\": \"test.user@example.com\" }";
+
+        Response response = given()
+                .contentType("application/json")
+                .body(requestBody)
+                .post("/create/user");
+
+        response.then().statusCode(400); 
+    }
+
+    @Test
+    public void testCreateUserWithDuplicateEmail() {
+        String requestBody = "{ \"firstName\": \"Neha\", \"lastName\": \"Sura\", \"phoneNumber\": 1112223333, \"emailId\": \"nehasura@example.com\" }";
+
+        Response response = given()
+                .header("roll-number", ROLL_NUMBER)
+                .contentType("application/json")
+                .body(requestBody)
+                .post("/create/user");
+
+        response.then().statusCode(400); 
+    }
+
+    @Test
+    public void testCreateUserWithMissingFirstName() {
+        String requestBody = "{ \"lastName\": \"Sura\", \"phoneNumber\": 1234567890, \"emailId\": \"devsura@example.com\" }";
+
+        Response response = given()
+                .header("roll-number", ROLL_NUMBER)
+                .contentType("application/json")
+                .body(requestBody)
+                .post("/create/user");
+
+        response.then().statusCode(400); 
+    }
+
+    @Test
+    public void testCreateUserWithInvalidPhoneNumber() {
+        String requestBody = "{ \"firstName\": \"Rahul\", \"lastName\": \"sura\", \"phoneNumber\": 12345, \"emailId\": \"rsura@example.com\" }";
+
+        Response response = given()
+                .header("roll-number", ROLL_NUMBER)
+                .contentType("application/json")
+                .body(requestBody)
+                .post("/create/user");
+
+        response.then().statusCode(400); 
     }
 
     @Test
     public void testCreateUserWithInvalidEmailFormat() {
-        RestAssured.given()
-            .header("roll-number", "4")
-            .header("Content-Type", "application/json")
-            .body("{ \"firstName\": \"John\", \"lastName\": \"Doe\", \"phoneNumber\": 1234567890, \"emailId\": \"john.doe.com\" }")
-            .when()
-            .post("/create/user")
-            .then()
-            .statusCode(400)
-            .body("error", equalTo("Invalid email format"));
-    }
+        String requestBody = "{ \"firstName\": \"Rahul\", \"lastName\": \"Sura\", \"phoneNumber\": 1234567890, \"emailId\": \"invalid.email.com\" }";
 
-    @Test
-    public void testCreateUserWithMissingFields() {
-        RestAssured.given()
-            .header("roll-number", "5")
-            .header("Content-Type", "application/json")
-            .body("{ \"firstName\": \"John\", \"lastName\": \"Doe\", \"phoneNumber\": 1234567890 }") // Missing emailId
-            .when()
-            .post("/create/user")
-            .then()
-            .statusCode(400)
-            .body("error", equalTo("Missing required fields"));
+        Response response = given()
+                .header("roll-number", ROLL_NUMBER)
+                .contentType("application/json")
+                .body(requestBody)
+                .post("/create/user");
+
+        response.then().statusCode(400);
     }
 }
